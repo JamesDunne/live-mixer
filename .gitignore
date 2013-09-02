@@ -1,0 +1,10 @@
+Debug/
+Release/
+external/
+
+*.opensdf
+*.sdf
+*.suo
+*.user
+*.exe
+*.dll

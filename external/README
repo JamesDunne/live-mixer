@@ -1,0 +1,33 @@
+Copy in files from Steinberg ASIO SDK 2.3 here.
+
+This SDK is not redistributable in source form so I cannot post these files on GitHub. Obtain your own copy from Steinberg's web site (for free, email registration required).
+
+This is the list of required dependency files:
+
+asio.cpp
+asio.h
+asiodrivers.cpp
+asiodrivers.h
+asiolist.cpp
+asiolist.h
+asiosys.h
+ginclude.h
+iasiodrv.h
+
+
+These are where the files are located in the ASIO SDK 2.3 source:
+
+common:
+  asio.h                 - ASIO C definition
+  asio.cpp               - asio host interface (not used on Mac)
+  asiosys.h
+  iasiodrv.h             - interface definition for the ASIO driver class
+
+host:
+  asiodrivers.h
+  asiodrivers.cpp         - ASIO driver managment (enumeration and instantiation)
+  ginclude.h              - platform specific definitions
+
+host/pc:
+  asiolist.h
+  asiolist.cpp           - instantiates an ASIO driver via the COM model
