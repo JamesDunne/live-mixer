@@ -1,5 +1,7 @@
 
+#include <stdlib.h>
 #include <stdio.h>
+#include <assert.h>
 #include "asiosys.h"
 #include "asio.h"
 #include "asiodrivers.h"
@@ -7,7 +9,8 @@
 extern AsioDrivers* asioDrivers;
 extern bool loadAsioDriver(char *name);
 
-enum {
+enum
+{
     // number of input and outputs supported by the host application
     // you can change these to higher or lower values
     kMaxInputChannels = 32,
@@ -49,17 +52,35 @@ typedef struct
     // ASIOGetChannelInfo()
     ASIOChannelInfo channelInfos[kMaxInputChannels + kMaxOutputChannels]; // channel info's
     // The above two arrays share the same indexing, as the data in them are linked together
-
 } DriverInfo;
 
 DriverInfo drv;
 ASIOCallbacks asioCallbacks;
 
-// Actual audio processing callback
+// Main audio processing callback.
 // NOTE: Called on a separate thread from main() thread.
 ASIOTime *bufferSwitchTimeInfo(ASIOTime *timeInfo, long index, ASIOBool processNow)
 {
-    
+    // Buffer size (in samples):
+    long buffSize = drv.preferredSize;
+
+    for (int i = 0; i < drv.outputBuffers; ++i)
+    {
+        if (i >= drv.inputBuffers) continue;
+
+        // Assumes int32 LSB type:
+        assert(drv.channelInfos[i].type == ASIOSTInt32LSB);
+
+        ASIOBufferInfo &inBuf  = drv.bufferInfos[i];
+        ASIOBufferInfo &outBuf = drv.bufferInfos[i + drv.inputBuffers];
+
+        assert(inBuf.channelNum == outBuf.channelNum);
+        assert(inBuf.isInput == ASIOTrue);
+        assert(outBuf.isInput == ASIOFalse);
+
+        // Copy input buffer to output buffer:
+        memcpy (outBuf.buffers[index], inBuf.buffers[index], buffSize * 4);
+    }
 
     if (drv.postOutput)
         ASIOOutputReady();
@@ -230,6 +251,13 @@ int main()
         drv.channelInfos[i].isInput = drv.bufferInfos[i].isInput;
         if (ASIOGetChannelInfo(&drv.channelInfos[i]) != ASE_OK)
             goto err;
+
+        printf("%s[%2d].type = %d\n", drv.channelInfos[i].isInput ? "in " : "out", drv.channelInfos[i].channel, drv.channelInfos[i].type);
+        if (drv.channelInfos[i].type != ASIOSTInt32LSB)
+        {
+            error = "Application assumes sample types of ASIOSTInt32LSB!";
+            goto err;
+        }
     }
 
     // get the input and output latencies
@@ -239,7 +267,9 @@ int main()
     if (ASIOGetLatencies(&drv.inputLatency, &drv.outputLatency) != ASE_OK)
         goto err;
 
-    printf ("ASIOGetLatencies (input: %d, output: %d);\n", drv.inputLatency, drv.outputLatency);
+    printf ("latencies: input: %d, output: %d\n", drv.inputLatency, drv.outputLatency);
+
+    //goto done;
 
     // Start the engine:
     if (ASIOStart() != ASE_OK)
