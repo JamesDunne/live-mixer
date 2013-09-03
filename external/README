@@ -2,6 +2,8 @@ Copy in files from Steinberg ASIO SDK 2.3 here.
 
 This SDK is not redistributable in source form so I cannot post these files on GitHub. Obtain your own copy from Steinberg's web site (for free, email registration required).
 
+http://www.steinberg.net/nc/en/company/developer/sdk_download_portal/asio_sdk.html
+
 This is the list of required dependency files:
 
 asio.cpp
